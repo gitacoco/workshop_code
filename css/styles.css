@@ -28,10 +28,6 @@
     background-color: cornflowerblue;
 }
 
-#main-menu div{
-    border: solid 1px;
-}
-
 #main-menu div:hover{
     color: chartreuse;
     cursor: pointer;
