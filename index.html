@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/leaflet.css">
     <script src="lib/leaflet.js"></script>
     <script src="lib/d3.min.js"></script>
-    <script src="lib/leaflet.edgebuffer.js"></script>
+    <!-- <script src="lib/leaflet.edgebuffer.js"></script> -->
 </head>
 
 <style>
@@ -36,7 +36,7 @@
 </body>
 
 <script>
-    var data, map;
+    var data, map, tile;
 
     //用颜色来区分类别
     var colorScale = {
@@ -46,25 +46,31 @@
 
     //用 ICON 来区分类别：设置阴影
     var iconType = {
-        '已建成': 'marker/leaf-green.png',
-        '未建成': 'marker/leaf-red.png'
+        '已建成': 'marker/icon1.png',
+        '未建成': 'marker/icon2.png'
     };
 
     //函数1：地图初始化
     function initMap() {
         //加载地图
-        map = L.map('map');
+        map = L.map('map', {
+            smoothZoom: true,
+            smoothZoomDelay: 1000 //Default to 1000
+        });
+
         //加载地图瓦片
-        L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.{ext}', {
+        tile = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain-background/{z}/{x}/{y}{r}.{ext}', {
             attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             subdomains: 'abcd',
-            minZoom: 1,
-            maxZoom: 16,
-            edgeBufferTiles: 5,
-            ext: 'jpg'
-        }).addTo(map);
-        //设置初始视点
-        map.setView([55, -2], 6);
+            minZoom: 0,
+            maxZoom: 18,
+            ext: 'png'
+        })
+
+
+        tile.addTo(map);
+        //设置初始视点 纬度/经度/缩放等级
+        map.setView([45, 50], 3);
     }
 
     //函数2：读取数据
@@ -82,12 +88,12 @@
     //设置自定义图标的属性
     var LeafIcon = L.Icon.extend({
         options: {
-            shadowUrl: 'marker/leaf-shadow.png',
-            iconSize: [38, 95],//icon 大小
-            shadowSize: [50, 64],//阴影大小
-            iconAnchor: [22, 94],//图标的标记点
-            shadowAnchor: [4, 62],//阴影的标记点
-            popupAnchor: [-3, -76]//工具提示的标记点
+            // shadowUrl: 'marker/leaf-shadow.png',
+            iconSize: [20, 20],//icon 大小
+            iconAnchor: [10, 0],//图标的标记点
+            // shadowSize: [50, 64],//阴影大小
+            // shadowAnchor: [4, 62],//阴影的标记点
+            popupAnchor: [0, 0]//工具提示的标记点
         }
     });
 
@@ -119,17 +125,17 @@
     getData();
 
     map.on("popupopen", function (centerMarker) {
-        const zoomLvl = 11;
+        const zoomLvl = 4;
         var cM = map.project(centerMarker.popup._latlng);
         cM.y -= centerMarker.popup._container.clientHeight / 3;
         map.setView(map.unproject(cM), zoomLvl, {
             animate: true,
-            duration: 0.5,
             pan: {
                 duration: 0.5
             }
         });
     });
+
 </script>
 
 </html>
