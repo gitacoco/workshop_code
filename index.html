@@ -3,30 +3,133 @@
 
 <head>
     <meta charset="utf-8">
-    <title>我的个人网站</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/style.css">
+    <title>Map</title>
+    <link rel="stylesheet" href="css/leaflet.css">
+    <script src="lib/leaflet.js"></script>
+    <script src="lib/d3.min.js"></script>
+    <script src="lib/leaflet.edgebuffer.js"></script>
 </head>
 
+<style>
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+    }
+
+    #map {
+        height: 100%;
+    }
+
+    /* 底图的颜色和透明度 */
+    /* .leaflet-container .leaflet-tile-pane img {
+        filter: grayscale(1)opacity(0.3);
+    } */
+
+    .leaflet-zoom-anim .leaflet-zoom-animated {
+        transition: 2s;
+    }
+</style>
+
 <body>
-    <span class="icon-uniE900"><span class="path1"></span>
-    <div id="main-menu">
-        <div>主页</div>
-        <div>关于</div>
-        <div>博客</div>
-        <div>联系我</div>
-    </div>
-
-    <div class="box"></div>
-
-    <div class="title">
-        <h1 style="font-size: 50px;">南京艺术学院介绍</h1>
-        <h2>南京艺术学院设计学院介绍</h2>
-        <h2>南京艺术学院设计学院介绍</h2>
-        <h2>南京艺术学院设计学院介绍</h2>
-        <h2>南京艺术学院设计学院介绍</h2>
-    </div>
-
+    <div id="map"></div>
 </body>
+
+<script>
+    var data, map;
+
+    //用颜色来区分类别
+    var colorScale = {
+        '已建成': '#B6A6CA',
+        '未建成': '#6D98BA'
+    };
+
+    //用 ICON 来区分类别：设置阴影
+    var iconType = {
+        '已建成': 'marker/leaf-green.png',
+        '未建成': 'marker/leaf-red.png'
+    };
+
+    //函数1：地图初始化
+    function initMap() {
+        //加载地图
+        map = L.map('map');
+        //加载地图瓦片
+        L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.{ext}', {
+            attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            subdomains: 'abcd',
+            minZoom: 1,
+            maxZoom: 16,
+            edgeBufferTiles: 5,
+            ext: 'jpg'
+        }).addTo(map);
+        //设置初始视点
+        map.setView([55, -2], 6);
+    }
+
+    //函数2：读取数据
+    function getData() {
+        //用 D3 加载数据
+        d3.csv('data/lecorbusier.csv')
+            .then(function (csv) {
+                //用 csv 文件里的数据给我们声明的变量赋值
+                data = csv;
+                //调用 addMarkers 函数，把点画在地图上
+                addMarkers();
+            });
+    }
+
+    //设置自定义图标的属性
+    var LeafIcon = L.Icon.extend({
+        options: {
+            shadowUrl: 'marker/leaf-shadow.png',
+            iconSize: [38, 95],//icon 大小
+            shadowSize: [50, 64],//阴影大小
+            iconAnchor: [22, 94],//图标的标记点
+            shadowAnchor: [4, 62],//阴影的标记点
+            popupAnchor: [-3, -76]//工具提示的标记点
+        }
+    });
+
+    //函数3：遍历数据点，画出标志
+    function addMarkers() {
+        data.forEach(function (d) {
+            //用不同的 icon 区分点
+            var iconPic = new LeafIcon({ iconUrl: iconType[d.category] });
+            var marker = L.marker([+d.latitude, +d.longitude], { icon: iconPic });
+
+            //用不同的颜色区分点
+            // var marker = L.circleMarker([+d.latitude, +d.longitude]);
+            //var color = colorScale[d.category] || '#aaa';
+            // marker.setStyle({
+            //     radius: 8,
+            //     fillColor: color,//填充颜色
+            //     fillOpacity: 1,//透明度
+            //     color: '#ddd',//描边颜色
+            //     weight: 0.25//描边宽度
+            // });
+
+            marker.addTo(map).bindPopup(d.work);
+        })
+    }
+
+
+    //加载 initMap 函数
+    initMap();
+    getData();
+
+    map.on("popupopen", function (centerMarker) {
+        const zoomLvl = 11;
+        var cM = map.project(centerMarker.popup._latlng);
+        cM.y -= centerMarker.popup._container.clientHeight / 3;
+        map.setView(map.unproject(cM), zoomLvl, {
+            animate: true,
+            duration: 0.5,
+            pan: {
+                duration: 0.5
+            }
+        });
+    });
+</script>
 
 </html>
