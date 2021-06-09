@@ -36,7 +36,7 @@
 </body>
 
 <script>
-    var data, map, tile;
+    var data, map, tile, pointWidth;
 
     //用颜色来区分类别
     var colorScale = {
@@ -44,7 +44,7 @@
         '未建成': '#6D98BA'
     };
 
-    //用 ICON 来区分类别：设置阴影
+    //用 ICON 来区分类别
     var iconType = {
         '已建成': 'marker/icon1.png',
         '未建成': 'marker/icon2.png'
@@ -58,19 +58,16 @@
             smoothZoomDelay: 1000 //Default to 1000
         });
 
-        //加载地图瓦片
-        tile = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain-background/{z}/{x}/{y}{r}.{ext}', {
-            attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            subdomains: 'abcd',
-            minZoom: 0,
-            maxZoom: 18,
-            ext: 'png'
-        })
+        //加载地图瓦片（皮肤）
+        tile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri',
+            maxZoom: 13
+        });
 
-
+        //把皮肤添加到地图模块
         tile.addTo(map);
         //设置初始视点 纬度/经度/缩放等级
-        map.setView([45, 50], 3);
+        map.setView([20, 0], 3);
     }
 
     //函数2：读取数据
@@ -80,6 +77,7 @@
             .then(function (csv) {
                 //用 csv 文件里的数据给我们声明的变量赋值
                 data = csv;
+                // pointWidth = d.latitude;
                 //调用 addMarkers 函数，把点画在地图上
                 addMarkers();
             });
@@ -90,31 +88,35 @@
         options: {
             // shadowUrl: 'marker/leaf-shadow.png',
             iconSize: [20, 20],//icon 大小
-            iconAnchor: [10, 0],//图标的标记点
+            iconAnchor: [0, 10],//图标的标记点
             // shadowSize: [50, 64],//阴影大小
             // shadowAnchor: [4, 62],//阴影的标记点
-            popupAnchor: [0, 0]//工具提示的标记点
+            popupAnchor: [10, -10]//工具提示的标记点
         }
     });
 
     //函数3：遍历数据点，画出标志
     function addMarkers() {
         data.forEach(function (d) {
+            
             //用不同的 icon 区分点
-            var iconPic = new LeafIcon({ iconUrl: iconType[d.category] });
-            var marker = L.marker([+d.latitude, +d.longitude], { icon: iconPic });
+            // var iconPic = new LeafIcon({ iconUrl: iconType[d.category] });
+            // var marker = L.marker([+d.latitude, +d.longitude], { icon: iconPic });
 
             //用不同的颜色区分点
-            // var marker = L.circleMarker([+d.latitude, +d.longitude]);
-            //var color = colorScale[d.category] || '#aaa';
-            // marker.setStyle({
-            //     radius: 8,
-            //     fillColor: color,//填充颜色
-            //     fillOpacity: 1,//透明度
-            //     color: '#ddd',//描边颜色
-            //     weight: 0.25//描边宽度
-            // });
+            var marker = L.circleMarker([+d.latitude, +d.longitude]);
+            var color = colorScale[d.category] || '#aaa';
+            var pointRadius = +d.latitude / 2;
+            console.log(pointRadius)
+            marker.setStyle({
+                radius: pointRadius,//尺寸大小
+                fillColor: color,//填充颜色
+                fillOpacity: 1,//透明度
+                color: 'blue',//描边颜色
+                weight: 3//描边宽度
+            });
 
+            //添加marker 到地图
             marker.addTo(map).bindPopup(d.work);
         })
     }
@@ -124,6 +126,7 @@
     initMap();
     getData();
 
+    //点击数据点自动缩放地图
     map.on("popupopen", function (centerMarker) {
         const zoomLvl = 4;
         var cM = map.project(centerMarker.popup._latlng);
